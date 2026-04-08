@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# .githooks/pre-push
+exec hack/ci-checks.sh
