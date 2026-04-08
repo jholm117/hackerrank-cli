@@ -12,6 +12,7 @@ var (
 	flagToken   string
 	flagOutput  string
 	flagNoColor bool
+	flagBaseURL string
 )
 
 var rootCmd = &cobra.Command{
@@ -25,6 +26,8 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&flagToken, "token", "", "API token (overrides config and env)")
 	rootCmd.PersistentFlags().StringVarP(&flagOutput, "output", "o", "", "Output format: table or json")
 	rootCmd.PersistentFlags().BoolVar(&flagNoColor, "no-color", false, "Disable color output")
+	rootCmd.PersistentFlags().StringVar(&flagBaseURL, "base-url", "", "API base URL override")
+	rootCmd.PersistentFlags().MarkHidden("base-url") //nolint:errcheck
 }
 
 func Execute() error {
@@ -41,5 +44,9 @@ func newClient() (*api.Client, error) {
 	if token == "" {
 		return nil, fmt.Errorf("not authenticated — run: hr auth login")
 	}
-	return api.NewClient(token), nil
+	var opts []api.Option
+	if flagBaseURL != "" {
+		opts = append(opts, api.WithBaseURL(flagBaseURL))
+	}
+	return api.NewClient(token, opts...), nil
 }
