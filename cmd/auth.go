@@ -9,6 +9,20 @@ import (
 	"golang.org/x/term"
 )
 
+// configPath is the config file path. Overridden in tests.
+var configPath = config.DefaultPath()
+
+// readToken reads a token without echoing. Overridden in tests.
+var readToken = func() (string, error) {
+	fmt.Fprint(os.Stderr, "Enter HackerRank API token: ")
+	raw, err := term.ReadPassword(int(os.Stdin.Fd()))
+	fmt.Fprintln(os.Stderr)
+	if err != nil {
+		return "", err
+	}
+	return string(raw), nil
+}
+
 var authCmd = &cobra.Command{
 	Use:   "auth",
 	Short: "Manage authentication",
@@ -18,27 +32,23 @@ var authLoginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "Save API token to config",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Fprint(os.Stderr, "Enter HackerRank API token: ")
-		raw, err := term.ReadPassword(int(os.Stdin.Fd()))
-		fmt.Fprintln(os.Stderr) // newline after hidden input
+		token, err := readToken()
 		if err != nil {
 			return err
 		}
-		token := string(raw)
 		if token == "" {
 			return fmt.Errorf("token cannot be empty")
 		}
 
-		path := config.DefaultPath()
-		cfg, err := config.Load(path)
+		cfg, err := config.Load(configPath)
 		if err != nil {
 			return err
 		}
 		cfg.Token = token
-		if err := config.Save(cfg, path); err != nil {
+		if err := config.Save(cfg, configPath); err != nil {
 			return err
 		}
-		fmt.Fprintf(os.Stderr, "Token saved to %s\n", path)
+		fmt.Fprintf(os.Stderr, "Token saved to %s\n", configPath)
 		return nil
 	},
 }
@@ -47,13 +57,12 @@ var authLogoutCmd = &cobra.Command{
 	Use:   "logout",
 	Short: "Remove stored token",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		path := config.DefaultPath()
-		cfg, err := config.Load(path)
+		cfg, err := config.Load(configPath)
 		if err != nil {
 			return err
 		}
 		cfg.Token = ""
-		if err := config.Save(cfg, path); err != nil {
+		if err := config.Save(cfg, configPath); err != nil {
 			return err
 		}
 		fmt.Fprintln(os.Stderr, "Token removed.")
@@ -65,8 +74,7 @@ var authStatusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Show current auth state",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		path := config.DefaultPath()
-		cfg, err := config.Load(path)
+		cfg, err := config.Load(configPath)
 		if err != nil {
 			return err
 		}
