@@ -1,0 +1,33 @@
+version: 2
+project_name: hackerrank-cli
+
+builds:
+  - main: .
+    binary: hr
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - format: tar.gz
+    name_template: "hr_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: "checksums.txt"
+
+brews:
+  - repository:
+      owner: jholm117
+      name: homebrew-tap
+    directory: Formula
+    homepage: "https://github.com/jholm117/hackerrank-cli"
+    description: "CLI for HackerRank for Work API"
+    install: |
+      bin.install "hr"
+    test: |
+      assert_match "hr", shell_output("#{bin}/hr --help")
