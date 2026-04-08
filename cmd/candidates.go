@@ -71,7 +71,7 @@ var candidatesGetCmd = &cobra.Command{
 		params := url.Values{}
 		params.Set("additional_fields", "questions,questions.solves,questions.submission_result")
 
-		var cand api.Candidate
+		var cand api.CandidateDetail
 		if err := c.Get("/tests/"+args[0]+"/candidates/"+args[1], params, &cand); err != nil {
 			return err
 		}
@@ -109,7 +109,7 @@ var candidatesCodeCmd = &cobra.Command{
 		params := url.Values{}
 		params.Set("additional_fields", "questions,questions.solves,questions.submission_result")
 
-		var cand api.Candidate
+		var cand api.CandidateDetail
 		if err := c.Get("/tests/"+args[0]+"/candidates/"+args[1], params, &cand); err != nil {
 			return err
 		}

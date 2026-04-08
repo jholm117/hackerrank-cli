@@ -11,7 +11,24 @@ type Test struct {
 	Questions []string `json:"questions"`
 }
 
+// Candidate is used for list endpoints where questions is a map of scores.
 type Candidate struct {
+	ID              string             `json:"id"`
+	Email           string             `json:"email"`
+	FullName        string             `json:"full_name"`
+	Score           float64            `json:"score"`
+	PercentageScore float64            `json:"percentage_score"`
+	Status          int                `json:"status"`
+	AttemptStart    string             `json:"attempt_starttime"`
+	AttemptEnd      string             `json:"attempt_endtime"`
+	AttemptID       string             `json:"attempt_id"`
+	Questions       map[string]float64 `json:"questions"`
+	PDFURL          string             `json:"pdf_url"`
+	ReportURL       string             `json:"report_url"`
+}
+
+// CandidateDetail is used with additional_fields where questions has full results.
+type CandidateDetail struct {
 	ID              string                    `json:"id"`
 	Email           string                    `json:"email"`
 	FullName        string                    `json:"full_name"`
