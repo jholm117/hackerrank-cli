@@ -1,13 +1,12 @@
 package cmd
 
 import (
-	"bufio"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/jholm117/hackerrank-cli/internal/config"
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 )
 
 var authCmd = &cobra.Command{
@@ -19,13 +18,13 @@ var authLoginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "Save API token to config",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Print("Enter HackerRank API token: ")
-		reader := bufio.NewReader(os.Stdin)
-		token, err := reader.ReadString('\n')
+		fmt.Fprint(os.Stderr, "Enter HackerRank API token: ")
+		raw, err := term.ReadPassword(int(os.Stdin.Fd()))
+		fmt.Fprintln(os.Stderr) // newline after hidden input
 		if err != nil {
 			return err
 		}
-		token = strings.TrimSpace(token)
+		token := string(raw)
 		if token == "" {
 			return fmt.Errorf("token cannot be empty")
 		}
