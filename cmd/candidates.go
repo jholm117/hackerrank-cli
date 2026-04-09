@@ -174,11 +174,57 @@ func langExtension(lang string) string {
 	}
 }
 
+var candidatesSearchCmd = &cobra.Command{
+	Use:   "search",
+	Short: "Search candidates by name or email",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		testID, _ := cmd.Flags().GetString("test")
+		query, _ := cmd.Flags().GetString("query")
+
+		c, err := newClient()
+		if err != nil {
+			return err
+		}
+
+		params := url.Values{}
+		params.Set("search", query)
+
+		candidates, err := api.Paginate[api.Candidate](c, "/tests/"+testID+"/candidates/search", params)
+		if err != nil {
+			return err
+		}
+
+		if flagOutput == "json" {
+			return output.WriteJSON(os.Stdout, candidates)
+		}
+
+		w := output.NewTableWriter(os.Stdout)
+		w.SetHeader([]string{"ID", "NAME", "EMAIL", "SCORE", "STATUS", "DATE"})
+		for _, cand := range candidates {
+			w.Append([]string{
+				cand.ID,
+				cand.FullName,
+				cand.Email,
+				fmt.Sprintf("%.0f%%", cand.PercentageScore),
+				fmt.Sprintf("%d", cand.Status),
+				cand.AttemptStart,
+			})
+		}
+		w.Render()
+		return nil
+	},
+}
+
 func init() {
 	candidatesListCmd.Flags().String("test", "", "Test ID (required)")
 	candidatesListCmd.MarkFlagRequired("test")
+	candidatesSearchCmd.Flags().String("test", "", "Test ID (required)")
+	candidatesSearchCmd.MarkFlagRequired("test")
+	candidatesSearchCmd.Flags().String("query", "", "Search query (name or email)")
+	candidatesSearchCmd.MarkFlagRequired("query")
 	candidatesCodeCmd.Flags().String("save", "", "Directory to save code files")
 	candidatesCmd.AddCommand(candidatesListCmd)
+	candidatesCmd.AddCommand(candidatesSearchCmd)
 	candidatesCmd.AddCommand(candidatesGetCmd)
 	candidatesCmd.AddCommand(candidatesCodeCmd)
 	rootCmd.AddCommand(candidatesCmd)

@@ -86,9 +86,9 @@ type InterviewQuestion struct {
 
 // InterviewRun holds one code snapshot from an interview pad.
 type InterviewRun struct {
-	Code     string `json:"code"`
-	Language string `json:"language"`
-	Input    string `json:"input"`
+	Code  string `json:"code"`
+	Lang  string `json:"lang"`
+	Input string `json:"input"`
 }
 
 type Interview struct {

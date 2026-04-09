@@ -3,13 +3,30 @@ package cmd
 
 import (
 	"fmt"
+	"html"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/jholm117/hackerrank-cli/internal/api"
 	"github.com/jholm117/hackerrank-cli/internal/output"
 	"github.com/spf13/cobra"
 )
+
+var htmlTagRe = regexp.MustCompile(`<[^>]+>`)
+
+func extractTitle(rawHTML string) string {
+	re := regexp.MustCompile(`<h[1-6][^>]*>(.*?)</h[1-6]>`)
+	m := re.FindStringSubmatch(rawHTML)
+	if m == nil {
+		re = regexp.MustCompile(`<p[^>]*>(.*?)</p>`)
+		m = re.FindStringSubmatch(rawHTML)
+	}
+	if m == nil {
+		return ""
+	}
+	return html.UnescapeString(strings.TrimSpace(htmlTagRe.ReplaceAllString(m[1], "")))
+}
 
 var interviewsCmd = &cobra.Command{
 	Use:   "interviews",
@@ -129,11 +146,16 @@ var interviewsCodeCmd = &cobra.Command{
 				continue
 			}
 			run := q.Runs[len(q.Runs)-1]
-			lang := run.Language
+			lang := run.Lang
 			if lang == "" {
 				lang = "unknown"
 			}
-			fmt.Printf("## Pad %d (%s)\n", i+1, lang)
+			title := extractTitle(q.Question)
+			if title != "" {
+				fmt.Printf("## Pad %d: %s (%s)\n", i+1, title, lang)
+			} else {
+				fmt.Printf("## Pad %d (%s)\n", i+1, lang)
+			}
 			fmt.Println(strings.Repeat("─", 60))
 			fmt.Println(run.Code)
 			fmt.Println()

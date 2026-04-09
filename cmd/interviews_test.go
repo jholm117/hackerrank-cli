@@ -75,9 +75,10 @@ func TestInterviewsCode(t *testing.T) {
 			"data": map[string]interface{}{
 				"questions": []map[string]interface{}{
 					{
-						"qtype": "code",
+						"qtype":    "code",
+						"question": "<h3>Task Prioritizer</h3><p>Implement a priority queue</p>",
 						"runs": []map[string]interface{}{
-							{"code": "def solve():\n    return 42", "language": "python3"},
+							{"code": "def solve():\n    return 42", "lang": "python3"},
 						},
 					},
 				},
@@ -100,8 +101,11 @@ func TestInterviewsCode(t *testing.T) {
 	if !strings.Contains(out, "def solve()") {
 		t.Errorf("missing code in output:\n%s", out)
 	}
-	if !strings.Contains(out, "return 42") {
-		t.Errorf("missing code body:\n%s", out)
+	if !strings.Contains(out, "Task Prioritizer") {
+		t.Errorf("missing question title:\n%s", out)
+	}
+	if !strings.Contains(out, "python3") {
+		t.Errorf("missing language:\n%s", out)
 	}
 }
 
