@@ -35,14 +35,16 @@ var interviewsCmd = &cobra.Command{
 
 var interviewsListCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List all interviews",
+	Short: "List interviews",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		limit, _ := cmd.Flags().GetInt("limit")
+
 		c, err := newClient()
 		if err != nil {
 			return err
 		}
 
-		interviews, err := api.Paginate[api.Interview](c, "/interviews", nil)
+		interviews, err := api.PaginateN[api.Interview](c, "/interviews", nil, limit)
 		if err != nil {
 			return err
 		}
@@ -165,6 +167,7 @@ var interviewsCodeCmd = &cobra.Command{
 }
 
 func init() {
+	interviewsListCmd.Flags().Int("limit", 20, "Max results to return (0 for all)")
 	interviewsCmd.AddCommand(interviewsListCmd)
 	interviewsCmd.AddCommand(interviewsGetCmd)
 	interviewsCmd.AddCommand(interviewsTranscriptCmd)

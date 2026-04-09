@@ -16,14 +16,16 @@ var testsCmd = &cobra.Command{
 
 var testsListCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List all tests",
+	Short: "List tests",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		limit, _ := cmd.Flags().GetInt("limit")
+
 		c, err := newClient()
 		if err != nil {
 			return err
 		}
 
-		tests, err := api.Paginate[api.Test](c, "/tests", nil)
+		tests, err := api.PaginateN[api.Test](c, "/tests", nil, limit)
 		if err != nil {
 			return err
 		}
@@ -82,6 +84,7 @@ var testsGetCmd = &cobra.Command{
 }
 
 func init() {
+	testsListCmd.Flags().Int("limit", 20, "Max results to return (0 for all)")
 	testsCmd.AddCommand(testsListCmd)
 	testsCmd.AddCommand(testsGetCmd)
 	rootCmd.AddCommand(testsCmd)

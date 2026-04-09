@@ -26,13 +26,14 @@ var candidatesListCmd = &cobra.Command{
 		if testID == "" {
 			return fmt.Errorf("--test flag is required")
 		}
+		limit, _ := cmd.Flags().GetInt("limit")
 
 		c, err := newClient()
 		if err != nil {
 			return err
 		}
 
-		candidates, err := api.Paginate[api.Candidate](c, "/tests/"+testID+"/candidates", nil)
+		candidates, err := api.PaginateN[api.Candidate](c, "/tests/"+testID+"/candidates", nil, limit)
 		if err != nil {
 			return err
 		}
@@ -180,6 +181,7 @@ var candidatesSearchCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		testID, _ := cmd.Flags().GetString("test")
 		query, _ := cmd.Flags().GetString("query")
+		limit, _ := cmd.Flags().GetInt("limit")
 
 		c, err := newClient()
 		if err != nil {
@@ -189,7 +191,7 @@ var candidatesSearchCmd = &cobra.Command{
 		params := url.Values{}
 		params.Set("search", query)
 
-		candidates, err := api.Paginate[api.Candidate](c, "/tests/"+testID+"/candidates/search", params)
+		candidates, err := api.PaginateN[api.Candidate](c, "/tests/"+testID+"/candidates/search", params, limit)
 		if err != nil {
 			return err
 		}
@@ -218,10 +220,12 @@ var candidatesSearchCmd = &cobra.Command{
 func init() {
 	candidatesListCmd.Flags().String("test", "", "Test ID (required)")
 	candidatesListCmd.MarkFlagRequired("test")
+	candidatesListCmd.Flags().Int("limit", 20, "Max results to return (0 for all)")
 	candidatesSearchCmd.Flags().String("test", "", "Test ID (required)")
 	candidatesSearchCmd.MarkFlagRequired("test")
 	candidatesSearchCmd.Flags().String("query", "", "Search query (name or email)")
 	candidatesSearchCmd.MarkFlagRequired("query")
+	candidatesSearchCmd.Flags().Int("limit", 20, "Max results to return (0 for all)")
 	candidatesCodeCmd.Flags().String("save", "", "Directory to save code files")
 	candidatesCmd.AddCommand(candidatesListCmd)
 	candidatesCmd.AddCommand(candidatesSearchCmd)
