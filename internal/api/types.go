@@ -69,6 +69,28 @@ type SubmissionMeta struct {
 	TestcaseStatus []int `json:"testcase_status"`
 }
 
+// InterviewRecording holds the code recordings from an interview.
+type InterviewRecording struct {
+	Data struct {
+		Questions []InterviewQuestion `json:"questions"`
+	} `json:"data"`
+}
+
+// InterviewQuestion holds a single question pad from an interview.
+type InterviewQuestion struct {
+	Question string           `json:"question"`
+	QHash    string           `json:"qhash"`
+	QType    string           `json:"qtype"`
+	Runs     []InterviewRun   `json:"runs"`
+}
+
+// InterviewRun holds one code snapshot from an interview pad.
+type InterviewRun struct {
+	Code     string `json:"code"`
+	Language string `json:"language"`
+	Input    string `json:"input"`
+}
+
 type Interview struct {
 	ID        string `json:"id"`
 	Title     string `json:"title"`

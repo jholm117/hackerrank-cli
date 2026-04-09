@@ -4,6 +4,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/jholm117/hackerrank-cli/internal/api"
 	"github.com/jholm117/hackerrank-cli/internal/output"
@@ -104,9 +105,47 @@ var interviewsTranscriptCmd = &cobra.Command{
 	},
 }
 
+var interviewsCodeCmd = &cobra.Command{
+	Use:   "code <interview-id>",
+	Short: "Extract code from interview pads",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		c, err := newClient()
+		if err != nil {
+			return err
+		}
+
+		var recording api.InterviewRecording
+		if err := c.GetRaw("/api/interviews/"+args[0]+"/recordings/code", nil, &recording); err != nil {
+			return err
+		}
+
+		if flagOutput == "json" {
+			return output.WriteJSON(os.Stdout, recording)
+		}
+
+		for i, q := range recording.Data.Questions {
+			if q.QType != "code" || len(q.Runs) == 0 {
+				continue
+			}
+			run := q.Runs[len(q.Runs)-1]
+			lang := run.Language
+			if lang == "" {
+				lang = "unknown"
+			}
+			fmt.Printf("## Pad %d (%s)\n", i+1, lang)
+			fmt.Println(strings.Repeat("─", 60))
+			fmt.Println(run.Code)
+			fmt.Println()
+		}
+		return nil
+	},
+}
+
 func init() {
 	interviewsCmd.AddCommand(interviewsListCmd)
 	interviewsCmd.AddCommand(interviewsGetCmd)
 	interviewsCmd.AddCommand(interviewsTranscriptCmd)
+	interviewsCmd.AddCommand(interviewsCodeCmd)
 	rootCmd.AddCommand(interviewsCmd)
 }

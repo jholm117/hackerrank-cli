@@ -66,6 +66,45 @@ func TestInterviewsGetJSON(t *testing.T) {
 	}
 }
 
+func TestInterviewsCode(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/interviews/iv1/recordings/code" {
+			t.Errorf("unexpected path: %s", r.URL.Path)
+		}
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"data": map[string]interface{}{
+				"questions": []map[string]interface{}{
+					{
+						"qtype": "code",
+						"runs": []map[string]interface{}{
+							{"code": "def solve():\n    return 42", "language": "python3"},
+						},
+					},
+				},
+			},
+		})
+	}))
+	defer server.Close()
+
+	flagOutput = ""
+
+	var execErr error
+	out := captureStdout(func() {
+		rootCmd.SetArgs([]string{"interviews", "code", "iv1", "--token", "tok", "--base-url", server.URL})
+		execErr = rootCmd.Execute()
+	})
+
+	if execErr != nil {
+		t.Fatalf("execute error: %v", execErr)
+	}
+	if !strings.Contains(out, "def solve()") {
+		t.Errorf("missing code in output:\n%s", out)
+	}
+	if !strings.Contains(out, "return 42") {
+		t.Errorf("missing code body:\n%s", out)
+	}
+}
+
 func TestInterviewsTranscript(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/x/api/v3/interviews/iv1/transcript" {
