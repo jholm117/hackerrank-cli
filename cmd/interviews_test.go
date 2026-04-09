@@ -8,6 +8,74 @@ import (
 	"testing"
 )
 
+func TestInterviewsSearch(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/x/api/v3/interviews/search" {
+			t.Errorf("unexpected path: %s", r.URL.Path)
+		}
+		if r.URL.Query().Get("query") != "shubhadeep" {
+			t.Errorf("expected query=shubhadeep, got %q", r.URL.Query().Get("query"))
+		}
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"data": []map[string]interface{}{
+				{"id": "8126945", "title": "shubhadeep.0708@gmail.com", "status": "ended", "created_at": "2026-03-26"},
+			},
+			"total": 1,
+		})
+	}))
+	defer server.Close()
+
+	var execErr error
+	out := captureStdout(func() {
+		rootCmd.SetArgs([]string{"interviews", "search", "--query", "shubhadeep", "--token", "tok", "--base-url", server.URL})
+		execErr = rootCmd.Execute()
+	})
+
+	if execErr != nil {
+		t.Fatalf("execute error: %v", execErr)
+	}
+	if !strings.Contains(out, "shubhadeep.0708@gmail.com") {
+		t.Errorf("missing interview:\n%s", out)
+	}
+	if !strings.Contains(out, "8126945") {
+		t.Errorf("missing interview ID:\n%s", out)
+	}
+}
+
+func TestInterviewsListSortOrder(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		sort := r.URL.Query().Get("sort")
+		order := r.URL.Query().Get("order")
+		if sort != "created_at" {
+			t.Errorf("expected sort=created_at, got %q", sort)
+		}
+		if order != "desc" {
+			t.Errorf("expected order=desc, got %q", order)
+		}
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"data": []map[string]interface{}{
+				{"id": "iv3", "title": "newest@test.com", "status": "ended", "created_at": "2026-04-08"},
+				{"id": "iv2", "title": "older@test.com", "status": "ended", "created_at": "2026-04-07"},
+			},
+			"total": 2,
+		})
+	}))
+	defer server.Close()
+
+	var execErr error
+	out := captureStdout(func() {
+		rootCmd.SetArgs([]string{"interviews", "list", "--token", "tok", "--base-url", server.URL, "--sort", "created_at", "--order", "desc"})
+		execErr = rootCmd.Execute()
+	})
+
+	if execErr != nil {
+		t.Fatalf("execute error: %v", execErr)
+	}
+	if !strings.Contains(out, "newest@test.com") {
+		t.Errorf("missing newest interview:\n%s", out)
+	}
+}
+
 func TestInterviewsList(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/x/api/v3/interviews" {

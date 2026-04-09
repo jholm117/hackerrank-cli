@@ -96,6 +96,7 @@ type Interview struct {
 	Title     string `json:"title"`
 	Status    string `json:"status"`
 	CreatedAt string `json:"created_at"`
+	EndedAt   string `json:"ended_at"`
 	URL       string `json:"url"`
 }
 

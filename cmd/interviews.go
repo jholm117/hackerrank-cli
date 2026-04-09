@@ -4,6 +4,7 @@ package cmd
 import (
 	"fmt"
 	"html"
+	"net/url"
 	"os"
 	"regexp"
 	"strings"
@@ -38,13 +39,23 @@ var interviewsListCmd = &cobra.Command{
 	Short: "List interviews",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		limit, _ := cmd.Flags().GetInt("limit")
+		sortBy, _ := cmd.Flags().GetString("sort")
+		order, _ := cmd.Flags().GetString("order")
 
 		c, err := newClient()
 		if err != nil {
 			return err
 		}
 
-		interviews, err := api.PaginateN[api.Interview](c, "/interviews", nil, limit)
+		params := url.Values{}
+		if sortBy != "" {
+			params.Set("sort", sortBy)
+		}
+		if order != "" {
+			params.Set("order", order)
+		}
+
+		interviews, err := api.PaginateN[api.Interview](c, "/interviews", params, limit)
 		if err != nil {
 			return err
 		}
@@ -124,6 +135,42 @@ var interviewsTranscriptCmd = &cobra.Command{
 	},
 }
 
+var interviewsSearchCmd = &cobra.Command{
+	Use:   "search",
+	Short: "Search interviews by candidate name or email",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		query, _ := cmd.Flags().GetString("query")
+		limit, _ := cmd.Flags().GetInt("limit")
+
+		c, err := newClient()
+		if err != nil {
+			return err
+		}
+
+		params := url.Values{}
+		params.Set("query", query)
+		params.Set("order_by", "id")
+		params.Set("order_dir", "desc")
+
+		interviews, err := api.PaginateN[api.Interview](c, "/interviews/search", params, limit)
+		if err != nil {
+			return err
+		}
+
+		if flagOutput == "json" {
+			return output.WriteJSON(os.Stdout, interviews)
+		}
+
+		w := output.NewTableWriter(os.Stdout)
+		w.SetHeader([]string{"ID", "TITLE", "STATUS", "CREATED"})
+		for _, iv := range interviews {
+			w.Append([]string{iv.ID, iv.Title, iv.Status, iv.CreatedAt})
+		}
+		w.Render()
+		return nil
+	},
+}
+
 var interviewsCodeCmd = &cobra.Command{
 	Use:   "code <interview-id>",
 	Short: "Extract code from interview pads",
@@ -168,7 +215,13 @@ var interviewsCodeCmd = &cobra.Command{
 
 func init() {
 	interviewsListCmd.Flags().Int("limit", 20, "Max results to return (0 for all)")
+	interviewsListCmd.Flags().String("sort", "", "Sort field (e.g. created_at, ended_at)")
+	interviewsListCmd.Flags().String("order", "", "Sort order: asc or desc")
+	interviewsSearchCmd.Flags().String("query", "", "Search query (candidate name or email)")
+	interviewsSearchCmd.MarkFlagRequired("query")
+	interviewsSearchCmd.Flags().Int("limit", 20, "Max results to return (0 for all)")
 	interviewsCmd.AddCommand(interviewsListCmd)
+	interviewsCmd.AddCommand(interviewsSearchCmd)
 	interviewsCmd.AddCommand(interviewsGetCmd)
 	interviewsCmd.AddCommand(interviewsTranscriptCmd)
 	interviewsCmd.AddCommand(interviewsCodeCmd)
